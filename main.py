@@ -110,7 +110,7 @@ def runPayload(duckyScript):
 def main():
     while not wifi.radio.ipv4_address:
         try:
-            wifi.radio.connect("Hekim","19751975")
+            wifi.radio.connect("someWifi","somePass")
             blink_led(led)
         except ConnectionError as e:
             print("Connection Error:", e)
