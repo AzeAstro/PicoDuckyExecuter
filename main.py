@@ -7,6 +7,7 @@ import socketpool
 import usb_hid
 import wifi
 import time
+from struct import pack,unpack
 
 duckyCommands = {
     'WINDOWS': Keycode.WINDOWS,'WIN': Keycode.WINDOWS, 'GUI': Keycode.GUI,
@@ -94,6 +95,7 @@ def runPayload(duckyScript):
     for line in duckyScript.splitlines():
         line = line.rstrip()
         if(line[0:6] == "REPEAT"):
+            i=1
             for i in range(int(line[7:])):
                 parseLine(previousLine)
                 time.sleep(float(defaultDelay)/1000)
@@ -129,18 +131,21 @@ def main():
         with mySoc.accept()[0] as connSoc:
             print("Got connection.")
             while True:
-                arrayData=bytearray(1024)
-                length=connSoc.recv_into(arrayData,1024)
-                data=bytes(arrayData[:length])
-                data=data.decode()
-                if data=="!disconnect":
+                payloadLength=bytearray(4)
+                connSoc.recv_into(payloadLength,4)
+                payloadLength=unpack("l",payloadLength)[0]
+                
+                payloadData=bytearray(payloadLength)
+                connSoc.recv_into(payloadData,payloadLength)
+                payloadData=payloadData.decode()
+                if payloadData=="!disconnect":
                     connSoc.close()
                     break
-                elif data=="!stop":
+                elif payloadData=="!stop":
                     connSoc.close()
                     exit()
                 else:
-                    runPayload(data)
+                    runPayload(payloadData)
                     
 if __name__=="__main__":
     main()

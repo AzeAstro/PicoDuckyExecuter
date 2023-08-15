@@ -24,9 +24,9 @@ Here, process is very simple: create a TCP socket object, connect to Pico's addr
 Example:  
 ```py
 import socket
+import struct
 
-
-payload="""
+duckyScript="""
 REM This is test script
 GUI R
 DELAY 1000
@@ -37,18 +37,24 @@ STRING ipconfig
 ENTER
 """
 
+payload=struct.pack("l",len(duckyScript))+duckyScript.encode()
+disconnectMessage=struct.pack("l",len("!disconnect"))+"!disconnect".encode()
+
 picoSoc=socket.socket(socket.AF_INET,socket.SOCK_STREAM)
 picoSoc.connect(("192.168.1.3",9999)) # According to my code on `main.py` file, the TCP server runs on port 9999. You can change it how you want.
 
-picoSoc.send(payload.encode()) # Send the payload
+
+picoSoc.send(payload) # Send the payload
 picoSoc.send("!disconnect".encode()) # Disconnect after sending payload.
 
 # You can use `!exit` to completely stop the pico.
 # It will raise error at pico and pico will completely stop.
+# But sending payload needs to be similar to how we send disconnect message or payload.
+# Length of payload should be packed as long and then payload should be attached to it.
 ```
 
 ### 2) [PicoPayloadSender](https://github.com/AzeAstro/PicoPayloadSender)
-It is my custom sender. A GUI app written in PyQt6. Can be used in Windows, Linux, Mac and so on(as much as you can use python and PyQt6 library.)  
+It is my custom sender. A GUI app written in PyQt6. Can be used in Windows, Linux, Mac and so on(as long as you can use python and PyQt6 library.)  
 
 ## Donations
 If you really want to send donation contact me. (No matter how much. Anything that is 1 USD or higher is accepted.)  
