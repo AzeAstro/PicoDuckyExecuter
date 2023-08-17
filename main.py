@@ -5,9 +5,11 @@ from board import *
 import digitalio
 import socketpool
 import usb_hid
+import gc
 import wifi
 import time
 from struct import pack,unpack
+
 
 duckyCommands = {
     'WINDOWS': Keycode.WINDOWS,'WIN': Keycode.WINDOWS, 'GUI': Keycode.GUI,
@@ -35,6 +37,7 @@ duckyCommands = {
 
 led = digitalio.DigitalInOut(LED)
 led.direction = digitalio.Direction.OUTPUT
+led.value = False
 
 kbd = Keyboard(usb_hid.devices)
 layout = KeyboardLayout(kbd)
@@ -130,13 +133,21 @@ def main():
         print("Waiting for connection...")
         with mySoc.accept()[0] as connSoc:
             print("Got connection.")
+            
             while True:
                 payloadLength=bytearray(4)
                 connSoc.recv_into(payloadLength,4)
                 payloadLength=unpack("l",payloadLength)[0]
-                
-                payloadData=bytearray(payloadLength)
-                connSoc.recv_into(payloadData,payloadLength)
+                payloadData=b""
+                print(payloadLength)
+                while True:
+                    if len(payloadData)>=payloadLength:
+                        break
+                    else:
+                        chunk=bytearray(2048)
+                        connSoc.recv_into(chunk,2048)
+                        payloadData+=chunk
+                        payloadData=payloadData.replace(b"\x00",b"")
                 payloadData=payloadData.decode()
                 if payloadData=="!disconnect":
                     connSoc.close()
@@ -146,9 +157,13 @@ def main():
                     exit()
                 else:
                     runPayload(payloadData)
+                gc.collect()
+                
                     
 if __name__=="__main__":
     main()
+
+
 
 
 
