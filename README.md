@@ -7,8 +7,9 @@ Executes Duckyscript that is recieved over network.
 Some parts implemented from [coder12341's pico-ducky](https://github.com/coder12341/pico-ducky) project.
 
 ## Script
-For now, script support these Duckyscript keywords: REM, STRING, DELAY, REPEAT
-I will try to add mouse to this script too in the future(If I don't forget that this project even exists)
+For now, script support these Duckyscript keywords: REM, STRING, DELAY, REPEAT, MOUSE_HOLD, MOUSE_RELEASE, MOUSE_CLICK, MOUSE_WHEEL,MOUSE_MOVE, MOUSE_RELEASE_ALL  
+I plan to add Consumer controls too such as VOLUME_INCREASE, NEXT_TRACK and etc.  
+If you read this and consumer controls aren't added yet and 3 months passed from last commit, write me in Instagram or Discord or even in GitHub itself(if you know how.)
 
 ## Installation
 1) Install CircuitPython to Raspberry Pico W
@@ -35,6 +36,24 @@ ENTER
 DELAY 1000
 STRING ipconfig
 ENTER
+DELAY 500
+REM For MOUSE_WHEEL, positive number means, scroll up,negative means, scroll down
+MOUSE_WHEEL 5
+REM MOUSE_MOVE moves mouse. First value is horizontal cordinate, second is vertical.
+REM For horizontal, positive value means up, negative down
+REM For vertical, positive value means right, negative left
+MOUSE_MOVE 100 -150
+REM For MOUSE_HOLD, we can use mouse buttons to hold till MOUSE_RELEASE is given.
+REM Available mouse buttons are: LEFT_BUTTON,RIGHT_BUTTON and MIDDLE_BUTTON
+MOUSE_HOLD LEFT_BUTTON
+MOUSE_MOVE -200 200
+REM MOUSE_RELEASE is releases button that is held by MOUSE_HOLD
+MOUSE_RELEASE LEFT_BUTTON
+REM MOUSE_CLICK clicks mouse button. As I said earlier, you only can use available mouse buttons.
+MOUSE_CLICK RIGHT_BUTTON
+ENTER
+REPEAT 7
+MOUSE_CLICK RIGHT_BUTTON
 """
 
 payload=struct.pack("l",len(duckyScript))+duckyScript.encode()

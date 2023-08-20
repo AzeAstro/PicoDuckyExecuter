@@ -12,7 +12,7 @@ import time
 from struct import pack,unpack
 
 # Keys for DuckyScript
-# It will need us
+# We will need it.
 duckyCommands = {
     'WINDOWS': Keycode.WINDOWS,'WIN': Keycode.WINDOWS, 'GUI': Keycode.GUI,
     'APP': Keycode.APPLICATION, 'MENU': Keycode.APPLICATION, 'SHIFT': Keycode.SHIFT,
@@ -55,8 +55,17 @@ time.sleep(.5)
 defaultDelay=0
 previousLine = ""
 
+# These are global variables for mouse.
+# mouseHold represents mouse button that is currently hold
+mouseHold=[]
+validMouseButtonStringList=["RIGHT_BUTTON","LEFT_BUTTON","MIDDLE_BUTTON"]
+
 # Creation of socketPool object for working with sockets
 pool=socketpool.SocketPool(wifi.radio)
+
+
+# KEYBOARD FUNCTIONS
+# Functions below are related to keyboard functionality.
 
 
 # convertLine command for converting buttons such as ALT, F4, ENTER and etc and adding it into button list
@@ -83,6 +92,172 @@ def runScriptLine(line):
 def sendString(line):
     layout.write(line)
 
+
+
+
+## MOUSE FUNCTIONS
+# Functions below are related to mouse functionality.
+
+# This function is for handling mouse commands.
+# Yes, I know, there are many if statements but beleive me, when you read code properly, it is ez.
+def mouseHandler(line):
+    global mouseHold
+    # MOUSE_HOLD
+    # Holds given mouse button.
+    # It can hold couple mouse buttons at the same time. So, it is normal to write "MOUSE_HOLD LEFT_BUTTON" and "MOUSE_HOLD RIGHT_BUTTON" right in next line.
+    if line.startswith("MOUSE_HOLD"):
+        # Here we strip the given line, so we can get the button that is requested by DuckyScript.
+        line=line.replace("MOUSE_HOLD","",1)
+        line=line.strip()
+        
+        # Checks if given button is left button and that button is not already held.
+        if line == "LEFT_BUTTON" and line not in mouseHold:
+            m.press(Mouse.LEFT_BUTTON)
+            mouseHold.append(line)
+            
+        elif line == "RIGHT_BUTTON" and line not in mouseHold:
+            m.press(Mouse.RIGHT_BUTTON)
+            mouseHold.append(line)
+            
+        elif line == "MIDDLE_BUTTON" and line not in mouseHold:
+            m.press(Mouse.MIDDLE_BUTTON)
+            mouseHold.append(line)
+            
+        # Runs in case of button is a valid mouse button but it is already held.
+        elif line in validMouseButtonStringList and line in mouseHold:
+            print("Button is already held.")
+        
+        # Runs if the given button is not valid button. For example, "MOUSE_HOLD DOORBELL_BUTTON" (I know it is a shitty example, but couldn't find anything better currently.)
+        elif line not in validMouseButtonStringList:
+            print("Unknown button")
+    
+    #MOUSE_MOVE
+    # Moves mouse horizontally and vertically.
+    # The first argument is horizontal and the second one is vertical movement.
+    # For horizontal, positive number means up, negative means down.
+    # For vertical, positive number means right, negative means left.
+    # Remember: IT DOESN'T MOVE MOUSE TO CORDINATES, IT MOVES MOUSE LEFT/RIGHT AND UP/DOWN AND DOESN'T DEPEND ON SCREEN ITSELF.
+    elif line.startswith("MOUSE_MOVE"):
+        # validCordinates if a bool for confirming if given arguments are valid.
+        validCordinates=None
+        
+        # Here we strip line as always for getting to arguments.
+        line=line.replace("MOUSE_MOVE","",1)
+        line=line.strip()
+        
+        # Here we try to convert give string cordinates into integer.
+        # if fails, movement won't happen.
+        try:
+            line=line.split(" ")
+            mouseHorizontal=int(line[0])
+            mouseVertical=int(line[1])
+            validCordinates=True
+        except ValueError:
+            print("Move accepts integer only")
+            validCordinates=False
+        
+        # Here, checks if cordinates are valid. If valid, moves mouse according to them.
+        if validCordinates:
+            # Here, I switch mouseHorizontal value.
+            # By deafult in mouse library of CircuitPython, negative means up, positive means down.
+            # So, I did it for avoiding misunderstandings.
+            if mouseHorizontal < 0:
+                mouseHorizontal=abs(mouseHorizontal)
+            else:
+                mouseHorizontal=-abs(mouseHorizontal)
+            
+            m.move(mouseVertical,mouseHorizontal,0)
+            
+    #MOUSE_WHEEL
+    # Moves mouse wheel up and down.
+    # As in MOUSE_MOVE, positive up, negative down.
+    # Scroll amount doesn't depend on screen or the object that is getting scrolled.
+    elif line.startswith("MOUSE_WHEEL"):
+        # As in MOUSE_MOVE, it is a bool that represents if given value for scrolling mouse is valid or not.
+        validScrollAmount=None
+        # Stripping(or "cutting". Don't you even dare to go to strip bar with a string.) line as always
+        line=line.replace("MOUSE_WHEEL","",1)
+        line=line.strip()
+        # Here, we try to convert scroll amount that is given as string to the int so we can pass it as argument.
+        try:
+            scrollAmount=int(line)
+            validScrollAmount=True
+        except ValueError:
+            validScrollAmount=False
+            
+            
+        if validScrollAmount:
+            m.move(0,0,scrollAmount)
+    
+    #MOUSE_RELEASE
+    # This command releases the held button.
+    # If button is not held, then it prints "Button is not held."
+    elif line.startswith("MOUSE_RELEASE "):
+        # Strip line parts as always...
+        line=line.replace("MOUSE_RELEASE","",1)
+        line=line.strip()
+        # Checks if button that is given as argument is a valid mouse button.
+        # If not, then prints "Unknown mouse button."
+        if line in validMouseButtonStringList:
+            # Check which button it was.
+            # release() function releases that button.
+            if line in mouseHold:
+                if line == "RIGHT_BUTTON":
+                    m.release(Mouse.RIGHT_BUTTON)
+                    mouseHold.remove("RIGHT_BUTTON")
+                elif line == "LEFT_BUTTON":
+                    m.release(Mouse.LEFT_BUTTON)
+                    mouseHold.remove("LEFT_BUTTON")
+                elif line == "MIDDLE_BUTTON":
+                    m.release(Mouse.MIDDLE_BUTTON)
+                    mouseHold.remove("MIDDLE_BUTTON")
+            # As I said earlier, if button is not held, then it prints that.
+            else:
+                print("Button is not held.")
+        # Runs in case if given button is an invalid mouse button.
+        # For example, "MOUSE_RELEASE BELLY_BUTTON" (As I said earlier, I am professional at shitty examples, but you got the point.)
+        else:
+            print("Unknown mouse button.")
+            
+            
+    #MOUSE_CLICK
+    # Click to mouse button.
+    # Buttons are: LEFT_BUTTON, RIGHT_BUTTON, MIDDLE_BUTTON
+    # You can make double clicks by stacking too MOUSE_CLICK.
+    # For example:
+    # MOUSE_CLICK LEFT_BUTTON
+    # MOUSE_CLICK LEFT_BUTTON
+    elif line.startswith("MOUSE_CLICK"):
+        # Strip line again...
+        line=line.replace("MOUSE_CLICK","",1)
+        line=line.strip()
+        # Checks if button that is given as argument is a valid mouse button.
+        # If not, then prints "Unknown mouse button."
+        if line in validMouseButtonStringList:
+            if line == "RIGHT_BUTTON":
+                m.click(Mouse.RIGHT_BUTTON)
+            elif line == "LEFT_BUTTON":
+                m.click(Mouse.LEFT_BUTTON)
+            elif line == "MIDDLE_BUTTON":
+                m.click(Mouse.MIDDLE_BUTTON)
+        else:
+            print("Unknown mouse button.")
+    
+    
+    
+    # Releases all mouse buttons.
+    # I don't think we need that much of comments here.
+    elif line.startswith("MOUSE_RELEASE_ALL"):
+        m.release_all()
+    
+    # Runs in case, if invalid mouse command is given.
+    # For example, "MOUSE_FLIP" (You got the point, didn't you?)
+    else:
+        print("Unknown mouse command.")
+
+
+
+
 # This function is kinda handler. Handles the given line and calls functions according to given DuckyScript line
 def parseLine(line):
     global defaultDelay
@@ -96,6 +271,8 @@ def parseLine(line):
         defaultDelay = int(line[14:]) * 10
     elif(line[0:12] == "DEFAULTDELAY"):
         defaultDelay = int(line[13:]) * 10
+    elif(line[0:5] == "MOUSE"):
+        mouseHandler(line)
     else:
         newScriptLine = convertLine(line)
         runScriptLine(newScriptLine)
@@ -103,6 +280,7 @@ def parseLine(line):
 
 # This function can be called as handler too but this function handles the whole payload.
 def runPayload(duckyScript):
+    global previousLine
     for line in duckyScript.splitlines():
         line = line.rstrip()
         if(line[0:6] == "REPEAT"):
@@ -201,7 +379,7 @@ if __name__=="__main__":
     # I made it this way so if you just need one function from this script, you can use it without running the code itself.
     main()
 
-# Now, if you read the whole comments written here, then now you know the magic of "Willy Wonka's chocholate factory" ;))
+# Now, if you read the whole comments written here, then now you know the magic of "Willy Wonka's chocholate factory" ;)
 # If you liked it, don't forget one fact: You can buy me one chocholate too ;)
 # Good luck with your script! 
 
