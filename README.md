@@ -1,5 +1,5 @@
 # ONLY FOR RASPBERRY PICO W
-To be honest, it can work on any board that works with CircuitPython, wifi module and usb functionality.
+To be honest, it can work on any board that works with CircuitPython and has wifi module and usb functionality.
 
 # PicoDuckyExecuter
 Basic DuckyScript executer with  input support. Payload can be sent over network
