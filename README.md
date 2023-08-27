@@ -89,7 +89,7 @@ picoSoc.connect(("192.168.1.3",9999)) # According to my code on `main.py` file, 
 
 
 picoSoc.send(payload) # Send the payload
-picoSoc.send("!disconnect".encode()) # Disconnect after sending payload.
+picoSoc.send(disconnectMessage) # Disconnect after sending payload.
 
 # You can use `!exit` to completely stop the pico.
 # It will raise error at pico and pico will completely stop.
