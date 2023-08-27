@@ -7,21 +7,45 @@ Basic DuckyScript executer with  input support. Payload can be sent over network
 Executes Duckyscript that is recieved over network.
 Some parts implemented from [coder12341's pico-ducky](https://github.com/coder12341/pico-ducky) project.
 
-## Script
-For now, script support these Duckyscript keywords: REM, STRING, DELAY, REPEAT, MOUSE_HOLD, MOUSE_RELEASE, MOUSE_CLICK, MOUSE_WHEEL,MOUSE_MOVE, MOUSE_RELEASE_ALL  
-I plan to add Consumer controls too such as VOLUME_INCREASE, NEXT_TRACK and etc.  
-If you read this and consumer controls aren't added yet and 3 months passed from last commit, write me in Instagram or Discord or even in GitHub itself(if you know how.)
-
 ## Installation
 1) Install CircuitPython to Raspberry Pico W
 2) Install [`adafruit_hid`](https://pypi.org/project/adafruit-circuitpython-hid/) package to it
 3) Drop main.py to root folder of pico
 4) Have fun! ;)
 
+
+## Script
+For now, code supports these Duckyscript keywords:  
+`REM`  
+`STRING`   
+`DELAY`   
+`REPEAT`  
+
+Keywords that I added:  
+`MOUSE_HOLD`  
+`MOUSE_RELEASE`  
+`MOUSE_CLICK`  
+`MOUSE_WHEEL`  
+`MOUSE_MOVE`  
+`MOUSE_RELEASE_ALL`  
+
+I plan to add Consumer controls too such as `VOLUME_INCREASE`, `NEXT_TRACK` and etc.  
+If you read this and consumer controls aren't added yet and 3 months passed from last commit, write me in Instagram or Discord or even in GitHub itself(if you know how.)
+
+
 ## Usage
+
+### Pre-run
+When code starts to run, it looks for config.json file. This file contains 3 keys: `mode`,`ssid`,`password`.  
+`mode` - can containt one of these 2 values: `station` (for connecting to an existsing access point/wifi) or `ap` (for creating a new access point/network so you can connect to it and then connect to Pico)  
+`ssid` - it is a string that contains AP name. If `mode` is `station` then it looks for a network with name that was given as value to `ssid` and tries to connect it. If `mode` is `ap`, then it creates an access point with this name.  
+`password` - this contains password. If `mode` is `ap` then it uses this password as created network's password. If `mode` is `station`, it searches networks with the name of `ssid` and when it finds, uses this password to connect that network.
+
+
+### Post-run
 As if you read the code, you can see that you can directly connect it over sockets. So, I will show 2 methods to connect it.  
 
-### 1) Python `sockets` library
+#### 1) Python `sockets` library
 Here, process is very simple: create a TCP socket object, connect to Pico's address and send payload using `send` function.  
 Example:  
 ```py
@@ -73,7 +97,7 @@ picoSoc.send("!disconnect".encode()) # Disconnect after sending payload.
 # Length of payload should be packed as long and then payload should be attached to it.
 ```
 
-### 2) [PicoPayloadSender](https://github.com/AzeAstro/PicoPayloadSender)
+#### 2) [PicoPayloadSender](https://github.com/AzeAstro/PicoPayloadSender)
 It is my custom sender. A GUI app written in PyQt6. Can be used in Windows, Linux, Mac and so on(as long as you can use python and PyQt6 library.)  
 
 ## Donations

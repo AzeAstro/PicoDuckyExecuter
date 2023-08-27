@@ -9,6 +9,7 @@ import usb_hid
 import gc
 import wifi
 import time
+import json
 from struct import pack,unpack
 
 # Keys for DuckyScript
@@ -36,6 +37,9 @@ duckyCommands = {
     'F12': Keycode.F12,
 }
 
+
+
+
 # Defining led for wireless connectivity status
 led = digitalio.DigitalInOut(LED)
 led.direction = digitalio.Direction.OUTPUT
@@ -60,10 +64,62 @@ previousLine = ""
 mouseHold=[]
 validMouseButtonStringList=["RIGHT_BUTTON","LEFT_BUTTON","MIDDLE_BUTTON"]
 
+
+# This function parses configuration from config.json file.
+# config.json must contain these 3 things: mode, ssid, password.
+# Mode can be either "ap" or "station" (station means it is gonna connect to some wifi. ap means, it starts an access point or simply said, a wifi so you can connect the network.)
+def parseConfig(configFile:str):
+    try:
+        with open(configFile,"r") as f:
+            config=json.load(f)
+        
+        try:
+            # Calls functions according to mode in config
+            if config['mode']=="station" or config['mode']=="client":
+                connectWifi(config['ssid'],config['password'])
+            
+            elif config['mode']=="ap":
+                startWifi(config['ssid'],config['password'])
+            
+            # Fallback in case mode is mode is invalid
+            else:
+                startWifi("PicoDuckyExecuter","IMightBePoorButIAmSmart")
+        # In case, you forgot to add ssid and password. Or you just want it to be as quick as possible.
+        # Remember the SSID and Password. They will need you in order to connect Pico.
+        except KeyError:
+            startWifi("PicoDuckyExecuter","IMightBePoorButIAmSmart")
+    except:
+        # This applies only when you forgot to write config.json.
+        # When config.json is not present or can't be read for some reason, it will start in AP mode and with this SSID and password.
+        startWifi("PicoDuckyExecuter","IMightBePoorButIAmSmart")
+
+
 # Creation of socketPool object for working with sockets
 pool=socketpool.SocketPool(wifi.radio)
 
+# This function creates access point so you can connect it and then run the script.
+# Default IP address of Pico is 192.168.4.1 but you can change it.
+# Check https://docs.circuitpython.org/en/latest/shared-bindings/wifi/index.html#wifi.Radio.set_ipv4_address_ap
+def startWifi(ssid:str,password:str):
+    wifi.radio.stop_station()
+    wifi.radio.start_ap(ssid,password)
+    #Turn on led when wifi is active
+    led.value=True
 
+# This function connects to wifi.
+# Just read the function name. It does what it says.
+def connectWifi(ssid:str,password:str):
+    # Here, we try to connect network. It is in endless loop, so, it won't stop unless it connects to wifi
+    # wifi.radio.ipv4_address is out IPv4 address. If we have this address, it means, we connected to wifi. So, this can be used as checking if we connected to wifi or not.
+    while not wifi.radio.ipv4_address:
+        try:
+            wifi.radio.connect(ssid,password)
+        except ConnectionError as e:
+            print("Connection Error:", e)
+            print("Retrying in 10 seconds")
+        time.sleep(10)
+    # Turns led on when got connected to wifi
+    led.value=True
 # KEYBOARD FUNCTIONS
 # Functions below are related to keyboard functionality.
 
@@ -299,18 +355,10 @@ def runPayload(duckyScript):
 
 # Here the magic begins...
 def main():
-    # Here, we try to connect network. It is in endless loop, so, it won't stop unless it connects to wifi
-    while not wifi.radio.ipv4_address:
-        try:
-            wifi.radio.connect("someWifi","somePass")
-        except ConnectionError as e:
-            print("Connection Error:", e)
-            print("Retrying in 10 seconds")
-        time.sleep(10)
     
-    # Turns led on when got connected to wifi
-    led.value=True
-
+    #Here,we parse config and either create AP or connect to AP
+    parseConfig("config.json")
+    
     # Creation of socket object for connection between client and Pico
     mySoc=pool.socket(pool.AF_INET,pool.SOCK_STREAM)
     
@@ -363,10 +411,19 @@ def main():
                     connSoc.close()
                     break
                 elif payloadData=="!stop":
-                    # Here, exit() function raises error. Since CircuitPython doesn't have exit function like regular python, it can be used here.
-                    # Even if exit function existed, both variants(function and raised error) would do the same job for us.
+                    # Closing connection with client
                     connSoc.close()
-                    exit()
+                    # Stops the wireless connection
+                    # wifi.radio.ap_active returns true if it is in AP mode.
+                    if wifi.radio.ap_active:
+                        wifi.radio.stop_ap()
+                    # And here, if we get false from AP mode, then it is in station mode(or connected to another wifi)
+                    # So, we disconnect it :D
+                    else:
+                        wifi.radio.stop_station()
+                    #Turning off led
+                    led.value=False
+                    return False
                 else:
                     # And here the payload is passed as argument into handler.
                     runPayload(payloadData)
@@ -382,6 +439,8 @@ if __name__=="__main__":
 # Now, if you read the whole comments written here, then now you know the magic of "Willy Wonka's chocholate factory" ;)
 # If you liked it, don't forget one fact: You can buy me one chocholate too ;)
 # Good luck with your script! 
+
+
 
 
 
