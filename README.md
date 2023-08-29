@@ -42,6 +42,11 @@ When code starts to run, it looks for config.json file. This file contains 3 key
 `password` - this contains password. If `mode` is `ap` then it uses this password as created network's password. If `mode` is `station`, it searches networks with the name of `ssid` and when it finds, uses this password to connect that network.
 
 
+**UPDATE:** I added configure.py which is script for configuring on-the-go. Let's say you only have your phone and Pico. You can connect your phone to Pico using USB cable and open COM terminal on your platform   
+I don't know if iPhone can do it or has applications for it, but in Android, there is an ap called [Serial USB Terminal](https://play.google.com/store/apps/details?id=de.kai_morich.serial_usb_terminal). Open the app, find the Pico from "Devices list" in left menu and go to "Terminal". There, you should see 2 wires at upper-right part. Press it and it will connect to Pico COM terminal. After that, press 3 dots on upper-right part again and press "Send BREAK". It will start REPL of Pico.  
+After starting REPL of Pico, `import configure` and it will help you to configure it on the go.
+
+
 ### Post-run
 As if you read the code, you can see that you can directly connect it over sockets. So, I will show 2 methods to connect it.  
 

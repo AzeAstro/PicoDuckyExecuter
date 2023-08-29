@@ -417,9 +417,8 @@ def main():
                     # wifi.radio.ap_active returns true if it is in AP mode.
                     if wifi.radio.ap_active:
                         wifi.radio.stop_ap()
-                    # And here, if we get false from AP mode, then it is in station mode(or connected to another wifi)
-                    # So, we disconnect it :D
-                    else:
+                    # wifi.radio.connected returns true if it connected to an AP or WiFi network.
+                    if wifi.radio.connected :
                         wifi.radio.stop_station()
                     #Turning off led
                     led.value=False
